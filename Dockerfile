@@ -108,7 +108,7 @@ RUN if [ "$MODEL_TYPE" = "realismo" ]; then \
       wget -q -O models/vae/ae.safetensors https://huggingface.co/Fabricioi/modelorealista/resolve/main/ae.safetensors && \
       wget -q -O models/clip/clip_l.safetensors https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors && \
       wget -q -O models/clip/t5xxl_fp16.safetensors https://huggingface.co/Fabricioi/modelorealista/resolve/main/t5xxl_fp16.safetensors && \
-      wget -q -O models/unet/modelo.safetensor https://huggingface.co/Fabricioi/modelorealista/resolve/main/modelo.safetensors; \
+      wget -q -O models/unet/modelo.safetensors https://huggingface.co/Fabricioi/modelorealista/resolve/main/modelo.safetensors; \
     fi
 
 RUN if [ "$MODEL_TYPE" = "flux1-dev" ]; then \
