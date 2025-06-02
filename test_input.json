@@ -7,113 +7,194 @@
       }
     ],
     "workflow": {
-      "6": {
-        "inputs": {
-          "text": "anime cat with massive fluffy fennec ears and a big fluffy tail blonde messy long hair blue eyes wearing a construction outfit placing a fancy black forest cake with candles on top of a dinner table of an old dark Victorian mansion lit by candlelight with a bright window to the foggy forest and very expensive stuff everywhere there are paintings on the walls",
-          "clip": ["30", 1]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Positive Prompt)"
-        }
-      },
-      "8": {
-        "inputs": {
-          "samples": ["31", 0],
-          "vae": ["30", 2]
-        },
-        "class_type": "VAEDecode",
-        "_meta": {
-          "title": "VAE Decode"
-        }
-      },
-      "9": {
-        "inputs": {
-          "filename_prefix": "ComfyUI",
-          "images": ["8", 0]
-        },
-        "class_type": "SaveImage",
-        "_meta": {
-          "title": "Save Image"
-        }
-      },
-      "27": {
-        "inputs": {
-          "width": 512,
-          "height": 512,
-          "batch_size": 1
-        },
-        "class_type": "EmptySD3LatentImage",
-        "_meta": {
-          "title": "EmptySD3LatentImage"
-        }
-      },
-      "30": {
-        "inputs": {
-          "ckpt_name": "flux1-dev-fp8.safetensors"
-        },
-        "class_type": "CheckpointLoaderSimple",
-        "_meta": {
-          "title": "Load Checkpoint"
-        }
-      },
-      "31": {
-        "inputs": {
-          "seed": 243057879077961,
-          "steps": 10,
-          "cfg": 1,
-          "sampler_name": "euler",
-          "scheduler": "simple",
-          "denoise": 1,
-          "model": ["30", 0],
-          "positive": ["35", 0],
-          "negative": ["33", 0],
-          "latent_image": ["27", 0]
-        },
-        "class_type": "KSampler",
-        "_meta": {
-          "title": "KSampler"
-        }
-      },
-      "33": {
-        "inputs": {
-          "text": "",
-          "clip": ["30", 1]
-        },
-        "class_type": "CLIPTextEncode",
-        "_meta": {
-          "title": "CLIP Text Encode (Negative Prompt)"
-        }
-      },
-      "35": {
-        "inputs": {
-          "guidance": 3.5,
-          "conditioning": ["6", 0]
-        },
-        "class_type": "FluxGuidance",
-        "_meta": {
-          "title": "FluxGuidance"
-        }
-      },
-      "38": {
-        "inputs": {
-          "images": ["8", 0]
-        },
-        "class_type": "PreviewImage",
-        "_meta": {
-          "title": "Preview Image"
-        }
-      },
-      "40": {
-        "inputs": {
-          "filename_prefix": "ComfyUI",
-          "images": ["8", 0]
-        },
-        "class_type": "SaveImage",
-        "_meta": {
-          "title": "Save Image"
-        }
-      }
+  "6": {
+    "inputs": {
+      "text": "A floating object composed of interlocking geometric shapes. The shapes are metallic and reflective, casting sharp shadows and gleaming in the sunlight. Beneath the object, fragments of rock and smaller shapes drift. In front of the object is the text “Real Flux”. The style is surreal and ultra-detailed, emphasizing clean lines and abstract beauty.",
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "11": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp16.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "RealFlux_1.0b_Dev_Transformer.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "17",
+        0
+      ],
+      "latent_image": [
+        "27",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "17": {
+    "inputs": {
+      "scheduler": "beta",
+      "steps": 25,
+      "denoise": 1,
+      "model": [
+        "30",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "22": {
+    "inputs": {
+      "model": [
+        "30",
+        0
+      ],
+      "conditioning": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 499604233618985
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 5,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "27": {
+    "inputs": {
+      "width": 1344,
+      "height": 1152,
+      "batch_size": 1
+    },
+    "class_type": "EmptySD3LatentImage",
+    "_meta": {
+      "title": "EmptySD3LatentImage"
+    }
+  },
+  "30": {
+    "inputs": {
+      "max_shift": 1.15,
+      "base_shift": 0.5,
+      "width": 1344,
+      "height": 1152,
+      "model": [
+        "12",
+        0
+      ]
+    },
+    "class_type": "ModelSamplingFlux",
+    "_meta": {
+      "title": "ModelSamplingFlux"
     }
   }
 }
