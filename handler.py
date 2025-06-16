@@ -17,15 +17,11 @@ import traceback
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
 # Maximum number of API check attempts
-COMFY_API_AVAILABLE_MAX_RETRIES = 1200
-# Websocket reconnection behaviour (can be overridden through environment variables)
-# NOTE: more attempts and diagnostics improve debuggability whenever ComfyUI crashes mid-job.
-#   • WEBSOCKET_RECONNECT_ATTEMPTS sets how many times we will try to reconnect.
-#   • WEBSOCKET_RECONNECT_DELAY_S sets the sleep in seconds between attempts.
-#
+COMFY_API_AVAILABLE_MAX_RETRIES = 1000
+
 # If the respective env-vars are not supplied we fall back to sensible defaults ("5" and "3").
-WEBSOCKET_RECONNECT_ATTEMPTS = int(os.environ.get("WEBSOCKET_RECONNECT_ATTEMPTS", 10))
-WEBSOCKET_RECONNECT_DELAY_S = int(os.environ.get("WEBSOCKET_RECONNECT_DELAY_S", 2))
+WEBSOCKET_RECONNECT_ATTEMPTS = int(os.environ.get("WEBSOCKET_RECONNECT_ATTEMPTS", 8))
+WEBSOCKET_RECONNECT_DELAY_S = int(os.environ.get("WEBSOCKET_RECONNECT_DELAY_S", 3))
 
 # Extra verbose websocket trace logs (set WEBSOCKET_TRACE=true to enable)
 if os.environ.get("WEBSOCKET_TRACE", "false").lower() == "true":
@@ -169,7 +165,7 @@ def validate_input(job_input):
     return {"workflow": workflow, "images": images}, None
 
 
-def check_server(url, retries=500, delay=50):
+def check_server(url, retries=700, delay=50):
     """
     Check if a server is reachable via HTTP GET request
 
@@ -760,12 +756,35 @@ def handler(job):
         print(f"worker-comfyui - Unexpected Handler Error: {e}")
         print(traceback.format_exc())
         return {"error": f"An unexpected error occurred: {e}"}
+# ... (todo o código do try e except) ...
     finally:
+        # --- CÓDIGO DE DIAGNÓSTICO ADICIONADO ---
+        print("--- [DIAGNOSIS] Entering finally block for process inspection ---")
+        try:
+            # Importamos aqui para manter a mudança contida
+            import subprocess
+            
+            # 'ps auxf' mostra a árvore de processos, ideal para ver relações pai-filho
+            result = subprocess.run(
+                ['ps', 'auxf'], 
+                capture_output=True, 
+                text=True, 
+                check=True
+            )
+            print("--- [DIAGNOSIS] Active Process List at End of Job ---")
+            print(f"\n{result.stdout}") # O \n ajuda na formatação dos logs
+            print("--- [DIAGNOSIS] End of Process List ---")
+        except Exception as diag_e:
+            print(f"--- [DIAGNOSIS] Error during process inspection: {diag_e}")
+        # --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
+
         if ws and ws.connected:
             print(f"worker-comfyui - Closing websocket connection.")
             ws.close()
 
     final_result = {}
+
+# ... (resto do código) ...
 
     if output_data:
         final_result["images"] = output_data
