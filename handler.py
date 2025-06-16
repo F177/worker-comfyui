@@ -13,6 +13,7 @@ import uuid
 import tempfile
 import socket
 import traceback
+import gc
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
@@ -739,6 +740,8 @@ def handler(job):
                 print(
                     f"worker-comfyui - --> If this output is useful, please consider opening an issue on GitHub to discuss adding support."
                 )
+        print("--- Forcing garbage collection before exiting try block ---")
+        gc.collect()
 
     except websocket.WebSocketException as e:
         print(f"worker-comfyui - WebSocket Error: {e}")
@@ -758,25 +761,34 @@ def handler(job):
         return {"error": f"An unexpected error occurred: {e}"}
 # ... (todo o código do try e except) ...
     finally:
-        # --- CÓDIGO DE DIAGNÓSTICO ADICIONADO ---
-        print("--- [DIAGNOSIS] Entering finally block for process inspection ---")
+        # --- BLOCO DE DIAGNÓSTICO v3 (MAIS ROBUSTO) ---
+        import logging
+        import subprocess
+        import sys
+
+        # Usamos logging.error para máxima prioridade e forçamos o flush
+        logging.error("--- [DIAGNOSIS v3] ENTERING FINALLY BLOCK ---")
+        sys.stdout.flush()
+        sys.stderr.flush()
+
         try:
-            # Importamos aqui para manter a mudança contida
-            import subprocess
-            
-            # 'ps auxf' mostra a árvore de processos, ideal para ver relações pai-filho
             result = subprocess.run(
                 ['ps', 'auxf'], 
                 capture_output=True, 
-                text=True, 
-                check=True
+                text=True
             )
-            print("--- [DIAGNOSIS] Active Process List at End of Job ---")
-            print(f"\n{result.stdout}") # O \n ajuda na formatação dos logs
-            print("--- [DIAGNOSIS] End of Process List ---")
+            logging.error("--- [DIAGNOSIS v3] Active Process List ---")
+            logging.error(f"\n{result.stdout}")
+            if result.stderr:
+                logging.error(f"--- [DIAGNOSIS v3] Stderr from ps command ---\n{result.stderr}")
+
         except Exception as diag_e:
-            print(f"--- [DIAGNOSIS] Error during process inspection: {diag_e}")
-        # --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
+            logging.error(f"--- [DIAGNOSIS v3] FAILED to run ps command: {diag_e}")
+        
+        logging.error("--- [DIAGNOSIS v3] CLOSING WEBSOCKET AND EXITING FINALLY ---")
+        sys.stdout.flush()
+        sys.stderr.flush()
+        # --- FIM DO BLOCO DE DIAGNÓSTICO ---
 
         if ws and ws.connected:
             print(f"worker-comfyui - Closing websocket connection.")
