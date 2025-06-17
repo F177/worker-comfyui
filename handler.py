@@ -760,39 +760,39 @@ def handler(job):
         print(traceback.format_exc())
         return {"error": f"An unexpected error occurred: {e}"}
 # ... (todo o código do try e except) ...
+# No final da sua função handler(job)
     finally:
-        # --- BLOCO DE DIAGNÓSTICO v3 (MAIS ROBUSTO) ---
+        # --- BLOCO DE FINALIZAÇÃO E DIAGNÓSTICO ---
         import logging
         import subprocess
         import sys
+        import os
+        import signal
 
-        # Usamos logging.error para máxima prioridade e forçamos o flush
-        logging.error("--- [DIAGNOSIS v3] ENTERING FINALLY BLOCK ---")
-        sys.stdout.flush()
-        sys.stderr.flush()
-
-        try:
-            result = subprocess.run(
-                ['ps', 'auxf'], 
-                capture_output=True, 
-                text=True
-            )
-            logging.error("--- [DIAGNOSIS v3] Active Process List ---")
-            logging.error(f"\n{result.stdout}")
-            if result.stderr:
-                logging.error(f"--- [DIAGNOSIS v3] Stderr from ps command ---\n{result.stderr}")
-
-        except Exception as diag_e:
-            logging.error(f"--- [DIAGNOSIS v3] FAILED to run ps command: {diag_e}")
+        logging.error("--- [FINALIZATION] Entering finally block ---")
         
-        logging.error("--- [DIAGNOSIS v3] CLOSING WEBSOCKET AND EXITING FINALLY ---")
-        sys.stdout.flush()
-        sys.stderr.flush()
-        # --- FIM DO BLOCO DE DIAGNÓSTICO ---
+        # Tenta ler o PID do arquivo e matar o processo do ComfyUI
+        try:
+            with open('/tmp/comfyui.pid', 'r') as f:
+                comfyui_pid = int(f.read().strip())
+            
+            logging.error(f"--- [FINALIZATION] Found ComfyUI PID: {comfyui_pid}. Terminating process... ---")
+            os.kill(comfyui_pid, signal.SIGTERM)
+            logging.error(f"--- [FINALIZATION] Sent SIGTERM to PID {comfyui_pid}. ---")
 
+        except FileNotFoundError:
+            logging.error("--- [FINALIZATION] /tmp/comfyui.pid not found. Cannot kill ComfyUI process. ---")
+        except Exception as kill_e:
+            logging.error(f"--- [FINALIZATION] Error killing ComfyUI process: {kill_e} ---")
+
+        # Fecha o websocket se estiver conectado
         if ws and ws.connected:
             print(f"worker-comfyui - Closing websocket connection.")
             ws.close()
+            
+        sys.stdout.flush()
+        sys.stderr.flush()
+        logging.error("--- [FINALIZATION] Finally block finished. ---")
 
     final_result = {}
 
