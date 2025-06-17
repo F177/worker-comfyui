@@ -5,7 +5,7 @@ FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04 AS base
 ENV DEBIAN_FRONTEND=noninteractive
 # Prefer binary wheels over source distributions for faster pip installations
 ENV PIP_PREFER_BINARY=1
-# Ensures output from python is printed immediately to the terminal without buffering
+# Ensures output from python is printed immediately to the terminal without bufferingg
 ENV PYTHONUNBUFFERED=1
 # Speed up some cmake builds
 ENV CMAKE_BUILD_PARALLEL_LEVEL=8
