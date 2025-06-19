@@ -13,18 +13,18 @@ import uuid
 import tempfile
 import socket
 import traceback
-import gc
-import logging
-import sys
-import signal
 
 # Time to wait between API check attempts in milliseconds
 COMFY_API_AVAILABLE_INTERVAL_MS = 50
 # Maximum number of API check attempts
 COMFY_API_AVAILABLE_MAX_RETRIES = 1000
-
+# Websocket reconnection behaviour (can be overridden through environment variables)
+# NOTE: more attempts and diagnostics improve debuggability whenever ComfyUI crashes mid-job.
+#   • WEBSOCKET_RECONNECT_ATTEMPTS sets how many times we will try to reconnect.
+#   • WEBSOCKET_RECONNECT_DELAY_S sets the sleep in seconds between attempts.
+#
 # If the respective env-vars are not supplied we fall back to sensible defaults ("5" and "3").
-WEBSOCKET_RECONNECT_ATTEMPTS = int(os.environ.get("WEBSOCKET_RECONNECT_ATTEMPTS", 8))
+WEBSOCKET_RECONNECT_ATTEMPTS = int(os.environ.get("WEBSOCKET_RECONNECT_ATTEMPTS", 7))
 WEBSOCKET_RECONNECT_DELAY_S = int(os.environ.get("WEBSOCKET_RECONNECT_DELAY_S", 3))
 
 # Extra verbose websocket trace logs (set WEBSOCKET_TRACE=true to enable)
@@ -169,7 +169,7 @@ def validate_input(job_input):
     return {"workflow": workflow, "images": images}, None
 
 
-def check_server(url, retries=700, delay=50):
+def check_server(url, retries=500, delay=50):
     """
     Check if a server is reachable via HTTP GET request
 
@@ -743,8 +743,6 @@ def handler(job):
                 print(
                     f"worker-comfyui - --> If this output is useful, please consider opening an issue on GitHub to discuss adding support."
                 )
-        print("--- Forcing garbage collection before exiting try block ---")
-        gc.collect()
 
     except websocket.WebSocketException as e:
         print(f"worker-comfyui - WebSocket Error: {e}")
@@ -762,38 +760,12 @@ def handler(job):
         print(f"worker-comfyui - Unexpected Handler Error: {e}")
         print(traceback.format_exc())
         return {"error": f"An unexpected error occurred: {e}"}
-# ... (todo o código do try e except) ...
-# No final da sua função handler(job)
-# No final da sua função handler(job)
     finally:
-        logging.error("--- [FINALIZATION v2] Entering finally block ---")
-
-        # PASSO 1: Fechar a conexão websocket PRIMEIRO, enquanto o servidor ainda está vivo.
         if ws and ws.connected:
             print(f"worker-comfyui - Closing websocket connection.")
             ws.close()
-        
-        # PASSO 2: AGORA, matar o processo do ComfyUI.
-        try:
-            with open('/tmp/comfyui.pid', 'r') as f:
-                comfyui_pid = int(f.read().strip())
-            
-            logging.error(f"--- [FINALIZATION v2] Found ComfyUI PID: {comfyui_pid}. Terminating process... ---")
-            os.kill(comfyui_pid, signal.SIGTERM)
-            logging.error(f"--- [FINALIZATION v2] Sent SIGTERM to PID {comfyui_pid}. ---")
-
-        except FileNotFoundError:
-            logging.error("--- [FINALIZATION v2] /tmp/comfyui.pid not found. Cannot kill ComfyUI process. ---")
-        except Exception as kill_e:
-            logging.error(f"--- [FINALIZATION v2] Error killing ComfyUI process: {kill_e} ---")
-            
-        sys.stdout.flush()
-        sys.stderr.flush()
-        logging.error("--- [FINALIZATION v2] Finally block finished. ---")
 
     final_result = {}
-
-# ... (resto do código) ...
 
     if output_data:
         final_result["images"] = output_data
